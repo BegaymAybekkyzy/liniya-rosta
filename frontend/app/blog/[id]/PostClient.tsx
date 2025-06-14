@@ -3,60 +3,52 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { Post } from '@/lib/types';
-import {fetchPostById} from "@/actions/posts";
+import { usePostsStore } from "@/store/postsStore";
+import { Post } from "@/lib/types";
+import Loading from "@/components/shared/Loading";
 
-type Props = {
-    postId: string;
-};
+interface Props {
+    data: Post | null;
+    error: string | null;
+}
 
-const PostClient: React.FC<Props> = ({ postId }) => {
+const PostClient: React.FC<Props> = ({ data, error }) => {
     const router = useRouter();
-    const [post, setPost] = useState<Post | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
+    const {
+        upsertPost,
+        setError,
+        loading,
+        setLoading,
+        error: storeError
+    } = usePostsStore();
+
+    const [isHydrating, setIsHydrating] = useState(true);
+
+    useEffect(() => {
+        if (data) {
+            upsertPost(data);
+        }
+        setError(error);
+        setLoading(false);
+        setIsHydrating(false);
+    }, [data, error, upsertPost, setError, setLoading]);
 
     const getImageUrl = (imagePath?: string) => {
         if (!imagePath) return null;
         return imagePath.startsWith('http') ? imagePath : `/${imagePath}`;
     };
 
-    useEffect(() => {
-        const loadPost = async () => {
-            try {
-                setLoading(true);
-                const fetchedPost = await fetchPostById(postId);
-                setPost(fetchedPost);
-            } catch (err) {
-                setError('Ошибка при загрузке поста');
-                console.error('Error fetching post:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (postId) {
-            void loadPost();
-        }
-    }, [postId]);
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+    if (isHydrating || loading) return <Loading />;
+    if (storeError) return (
+        <div className="container mx-auto px-4 py-8">
+            <div className="text-center text-red-500 text-xl">
+                Ошибка при загрузке поста: {storeError}
             </div>
-        );
-    }
+        </div>
+    );
 
-    if (error) {
-        return (
-            <div className="flex justify-center items-center min-h-screen">
-                <div className="text-red-500 text-xl">{error}</div>
-            </div>
-        );
-    }
-
-    if (!post) {
+    if (!data) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className="text-gray-500 text-xl">Пост не найден</div>
@@ -77,24 +69,21 @@ const PostClient: React.FC<Props> = ({ postId }) => {
             <article className="bg-white rounded-lg shadow-lg overflow-hidden">
                 <div className="aspect-w-16 aspect-h-9">
                     <img
-                        src={getImageUrl(post.image) || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop'}
+                        src={getImageUrl(data.image) || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop'}
                         onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop';
+                            (e.target as HTMLImageElement).src =
+                                'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&h=400&fit=crop';
                         }}
-                        alt={post.title}
+                        alt={data.title}
                         className="w-full h-64 md:h-96 object-cover"
                     />
                 </div>
 
                 <div className="p-8">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-6">
-                        {post.title}
-                    </h1>
+                    <h1 className="text-4xl font-bold text-gray-900 mb-6">{data.title}</h1>
 
                     <div className="prose prose-lg max-w-none">
-                        <p className="text-gray-700 leading-relaxed text-lg">
-                            {post.description}
-                        </p>
+                        <p className="text-gray-700 leading-relaxed text-lg">{data.description}</p>
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-gray-200">

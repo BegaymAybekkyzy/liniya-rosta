@@ -1,37 +1,40 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { Post } from '@/lib/types';
-import {fetchPosts} from "@/actions/posts";
-import {ArrowRight} from "lucide-react";
+import { ArrowRight } from 'lucide-react';
+import { usePostsStore } from '@/store/postsStore';
+import {Post} from "@/lib/types";
 
-const BlogClient = () => {
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+interface Props {
+    data: Post[];
+    error: string | null;
+}
+
+const BlogClient: React.FC<Props> = ({ data, error }) => {
+    const {
+        posts,
+        loading,
+        error: storeError,
+        setPosts,
+        setError,
+        setLoading,
+        clearError
+    } = usePostsStore();
+
+    useEffect(() => {
+        if (data) {
+            setPosts(data);
+        }
+        setError(error);
+        setLoading(false);
+        clearError();
+    }, [data, error, setPosts, setError, setLoading, clearError]);
 
     const getImageUrl = (imagePath?: string) => {
         if (!imagePath) return null;
         return imagePath.startsWith('http') ? imagePath : `/${imagePath}`;
     };
-
-    useEffect(() => {
-        const loadPosts = async () => {
-            try {
-                setLoading(true);
-                const fetchedPosts = await fetchPosts();
-                setPosts(fetchedPosts);
-            } catch (err) {
-                setError('Ошибка при загрузке постов');
-                console.error('Error fetching posts:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void loadPosts();
-    }, []);
 
     if (loading) {
         return (
@@ -41,10 +44,10 @@ const BlogClient = () => {
         );
     }
 
-    if (error) {
+    if (storeError) {
         return (
             <div className="flex justify-center items-center min-h-screen">
-                <div className="text-red-500 text-xl">{error}</div>
+                <div className="text-red-500 text-xl">{storeError}</div>
             </div>
         );
     }
@@ -53,9 +56,7 @@ const BlogClient = () => {
         return (
             <div className="container mx-auto px-4 py-8">
                 <h1 className="text-4xl font-bold text-center mb-8">Блог</h1>
-                <div className="text-center text-gray-500 text-xl">
-                    Пока нет опубликованных постов
-                </div>
+                <div className="text-center text-gray-500 text-xl">Пока нет опубликованных постов</div>
             </div>
         );
     }
@@ -74,7 +75,8 @@ const BlogClient = () => {
                             <img
                                 src={getImageUrl(post.image) || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop'}
                                 onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
+                                    (e.target as HTMLImageElement).src =
+                                        'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=300&fit=crop';
                                 }}
                                 alt={post.title}
                                 className="w-full h-48 object-cover"
@@ -82,13 +84,9 @@ const BlogClient = () => {
                         </div>
 
                         <div className="p-6">
-                            <h2 className="text-xl font-semibold mb-3 text-gray-800 line-clamp-2">
-                                {post.title}
-                            </h2>
+                            <h2 className="text-xl font-semibold mb-3 text-gray-800 line-clamp-2">{post.title}</h2>
 
-                            <p className="text-gray-600 mb-6 line-clamp-3">
-                                {post.description}
-                            </p>
+                            <p className="text-gray-600 mb-6 line-clamp-3">{post.description}</p>
 
                             <div className="flex justify-end">
                                 <Link

@@ -1,65 +1,24 @@
-"use client";
+import React from "react";
+export const dynamic = "force-dynamic";
 
-import React, {useLayoutEffect, useState} from 'react';
-import {usePortfolioStore} from "@/store/portfolioItem";
-import {Container} from "@/components/shared/Container";
-import {useParams} from 'next/navigation';
-import {API_BASE_URL} from "@/lib/globalConstants";
-import Image from "next/image";
-import {GalleryItem} from "@/lib/types";
-import {ModalWindow} from "@/components/ui/modal-window";
+import {fetchPortfolioItems} from "@/actions/portfolios";
+import GalleryClient from './GalleryClient';
 
-const GalleryPage = () => {
-    const {detailItem, fetchItem} = usePortfolioStore();
-    const gallery = detailItem?.gallery;
-    const params = useParams();
-    const id = params?.id as string;
-    const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+type Params = { id: string };
 
-    useLayoutEffect(() => {
-        if (id) {
-            void fetchItem(id);
-        }
-
-    }, [fetchItem, id]);
-
+const GalleryPage = async ({ params }: { params: Promise<Params> }) => {
+    const { id } = await params;
+    const detailItem = await fetchPortfolioItems(id);
 
     return (
-        <Container>
-            <div className="grid grid-cols-3 gap-4">
-                {gallery?.map((item) => {
-                    const imageUrl = API_BASE_URL + "/" + item.image;
-
-                    return (
-                        <div
-                            key={item._id}
-                            onClick={() => setSelectedItem(item)}
-                            className="relative w-full h-100  overflow-hidden rounded-xl group">
-                            <Image
-                                src={imageUrl}
-                                alt={item._id}
-                                fill
-                                priority
-                                className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                            />
-                        </div>
-
-                    );
-                })}
-            </div>
-
-            {selectedItem && (
-                <ModalWindow isOpen={true} onClose={() => setSelectedItem(null)}>
-                    <Image
-                        src={API_BASE_URL + "/" + selectedItem.image}
-                        alt="modal"
-                        width={800}
-                        height={600}
-                        className="w-full h-auto object-contain"
-                    />
-                </ModalWindow>
-            )}
-        </Container>
+        <main className="container">
+            <h1 className="text-3xl font-bold mb-4 text-center">Галерея</h1>
+            <p className="mb-8 text-lg text-muted-foreground text-center">{detailItem?.description}</p>
+            {
+               detailItem ? <GalleryClient detailItem={detailItem}/>
+                    : <p>Галерея пуста</p>
+            }
+        </main>
     );
 };
 

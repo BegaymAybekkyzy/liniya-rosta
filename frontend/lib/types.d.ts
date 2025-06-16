@@ -44,81 +44,13 @@ export interface ValidationError {
 export interface GlobalMessage {
     error: string;
 }
-
 export interface IRequestMutation {
     name: string;
     email: string;
     phone: string;
 }
 
-export interface Contact {
+export interface ContactDataDTO {
     _id: string;
-    location: string;
-    phone1: string;
-    phone2?: string;
-    email: string;
-    workingHours: {
-        monday: string;
-        tuesday: string;
-        wednesday: string;
-        thursday: string;
-        friday: string;
-        saturday: string;
-        sunday: string;
-    };
-    linkLocation: string;
-    mapLocation: string;
-    instagram: string;
-    whatsapp: string;
+
 }
-
-
-export interface User {
-    _id: string;
-    email: string;
-    displayName: string;
-    role: string;
-}
-
-export interface UserForm {
-    email: string;
-    password: string;
-    confirmPassword: string;
-}
-
-export interface Post {
-    _id: string;
-    title: string;
-    description: string;
-    image: string;
-}
-
-export interface CreatePostData {
-    title: string;
-    description: string;
-    image: File;
-}
-
-export interface UpdatePostData {
-    title?: string;
-    description?: string;
-    image?: File;
-}
-
-export interface ProductAdmin {
-    _id: string;
-    title: string;
-    category: string;
-    image: string
-    description: string | null;
-}
-
-export interface Laminate {
-    _id: string;
-    title: string;
-    image: string;
-    description: string | null;
-}
-
-export type ProductWithoutId = Omit<ProductAdmin, '_id'>;
-

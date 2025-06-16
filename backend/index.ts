@@ -10,8 +10,6 @@ import usersRouter from "./src/routes/users";
 import superAdminRouter from "./src/routes/superadmin";
 import requestRouter from "./src/routes/requests";
 import portfolioItemRouter from "./src/routes/portfolioItems";
-import laminateItemsRouter from "./src/routes/laminateItems";
-import contactsRouter from "./src/routes/contacts";
 
 const app = express();
 const port = 8000;
@@ -33,8 +31,6 @@ app.use('/products', productRouter);
 app.use('/posts', postRouter);
 app.use('/requests', requestRouter)
 app.use('/portfolio-items', portfolioItemRouter);
-app.use('/laminate-items', laminateItemsRouter);
-app.use('/contacts', contactsRouter);
 
 const run = async () => {
     await mongoose.connect(config.db);

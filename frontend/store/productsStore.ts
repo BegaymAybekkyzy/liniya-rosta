@@ -3,18 +3,18 @@ import {Product} from '@/lib/types';
 
 interface ProductState {
     products: Product[];
-    fetchProductsLoading: boolean;
-    fetchProductsError: string | null;
+    fetchLoading: boolean;
+    fetchError: string | null;
     setProducts: (products: Product[]) => void;
-    setFetchProductsLoading: (loading: boolean) => void;
-    setFetchProductsError: (error: string | null) => void;
+    setFetchLoading: (loading: boolean) => void;
+    setFetchError: (error: string | null) => void;
 }
 
 export const useProductStore = create<ProductState>((set) => ({
     products: [],
-    fetchProductsLoading: true,
-    fetchProductsError: null,
-    setProducts: (products) => set({products}),
-    setFetchProductsLoading: (loading) => set({fetchProductsLoading: loading}),
-    setFetchProductsError: (error) => set({fetchProductsError: error})
+    fetchLoading: false,
+    fetchError: null,
+    setProducts: (products) => set({ products }),
+    setFetchLoading: (loading) => set({ fetchLoading: loading }),
+    setFetchError: (error) => set({ fetchError: error })
 }));

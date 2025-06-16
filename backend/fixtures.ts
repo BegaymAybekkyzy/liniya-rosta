@@ -1,14 +1,12 @@
 import mongoose from "mongoose";
 import config from "./config";
 import User from "./src/models/User";
+import {randomUUID} from "node:crypto";
 import Category from "./src/models/Category";
 import Product from "./src/models/Product";
 import Post from "./src/models/Post";
 import {PortfolioItem} from "./src/models/PortfolioItem";
 import RequestFromClient from "./src/models/Request";
-import LaminateItem from "./src/models/LaminateItem";
-import Contact from "./src/models/Contact";
-
 
 const run = async () => {
     await mongoose.connect(config.db);
@@ -21,7 +19,6 @@ const run = async () => {
         await db.dropCollection('posts');
         await db.dropCollection('portfolioitems');
         await db.dropCollection('requests');
-        await db.dropCollection('contacts.ts');
     } catch (e) {
         console.log('Коллекции отсутствовали, пропуск сброса');
     }
@@ -33,6 +30,7 @@ const run = async () => {
             confirmPassword: '123',
             role: 'superadmin',
             displayName: 'Бакыт',
+            token: randomUUID(),
         },
         {
             email: 'alice@gmail.com',
@@ -40,29 +38,9 @@ const run = async () => {
             confirmPassword: '123',
             role: 'admin',
             displayName: 'Алиса',
+            token: randomUUID(),
         },
     );
-
-    await Contact.create({
-        location: "г. Бишкек, Улица Куренкеева, 49",
-        phone1: "+996700123456",
-        phone2: "+996555654321",
-        email: "liniyarosta49@gmail.com",
-        whatsapp: "+996700123456",
-        instagram: "https://www.instagram.com/liniya_rosta.kg/",
-        mapLocation: "https://2gis.kg/bishkek/firm/70000001094990183?m=74.623804%2C42.890143%2F16",
-        workingHours: {
-            monday: "09:00–15:00",
-            tuesday: "09:00–17:00",
-            wednesday: "09:00–17:00",
-            thursday: "09:00–17:00",
-            friday: "09:00–17:00",
-            saturday: "09:00–15:00",
-            sunday: "Выходной"
-        },
-        linkLocation: "https://www.openstreetmap.org/export/embed.html?bbox=74.619%2C42.887%2C74.628%2C42.892&layer=mapnik&marker=42.890104%2C74.623837"
-    });
-
 
     const [lightingTechnology, film] = await Category.create(
         {
@@ -135,26 +113,7 @@ const run = async () => {
                 {
                     image: 'test/IMG_0451.jpg',
                 },
-                {
-                    image: 'test/IMG_0449.jpg',
-                },
-                {
-                    image: 'test/IMG_0453.jpg',
-                },
-                {
-                    image: 'test/IMG_0454.jpg',
-                },
-                {
-                    image: 'test/IMG_0455.jpg',
-                },
-                {
-                    image: 'test/IMG_0610.jpg',
-                },
-                {
-                    image: 'test/IMG_0611.jpg',
-                },
             ],
-            description: "Современная гостиная",
         },
         {
             cover: 'test/IMG_2687.jpg',
@@ -165,32 +124,7 @@ const run = async () => {
                 {
                     image: 'test/IMG_2682.jpg',
                 },
-                {
-                    image: 'test/IMG_2688.jpg',
-                },
-                {
-                    image: 'test/IMG_2685.jpg',
-                },
-                {
-                    image: 'test/IMG_2689.jpg',
-                },
-                {
-                    image: 'test/IMG_2690.jpg',
-                },
-                {
-                    image: 'test/IMG_2691.jpg',
-                },
-                {
-                    image: 'test/IMG_2692.jpg',
-                },
-                {
-                    image: 'test/IMG_2683.jpg',
-                },
-                {
-                    image: 'test/IMG_2682.jpg',
-                },
             ],
-            description: "Современная гостиная",
         }
     );
 
@@ -211,32 +145,6 @@ const run = async () => {
             email: 'aidana@gmail.com',
         },
     )
-
-    await LaminateItem.create({
-            title: 'Тис Альпик',
-            description: 'Размер: 180x1220x4,0/0,3+1ммIXPE',
-            image: 'test/laminate1.JPG',
-        }, {
-            title: 'Тис Латте',
-            description: 'Размер: 180x1220x4,0/0,3+1ммIXPE',
-            image: 'test/laminate2.JPG',
-        }, {
-            title: 'Бук Шале',
-            description: 'Размер: 180x1220x4,0/0,3+1ммIXPE',
-            image: 'test/laminate3.JPG',
-        }, {
-            title: 'Орех Шато',
-            description: 'Размер: 180x1220x4,0/0,3+1ммIXPE',
-            image: 'test/laminate4.JPG',
-        }, {
-            title: 'Дуб Классик',
-            description: 'Размер: 180x1220x4,0/0,3+1ммIXPE',
-            image: 'test/laminate5.JPG',
-        },
-    )
-    await db.close();
-
 }
-
 
 run().catch(console.error);

@@ -1,10 +1,9 @@
 import React from 'react';
-import AdminBlogClient from "@/app/admin/blog/AdminBlogClient";
 
 const AdminBlogPage = () => {
     return (
         <div>
-            <AdminBlogClient />
+            Блог
         </div>
     );
 };

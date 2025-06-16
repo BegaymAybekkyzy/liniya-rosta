@@ -1,8 +1,8 @@
 'use client';
 
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useProductStore} from '@/store/productsStore';
-import {usePortfolioStore} from "@/store/portfolioItemStore";
+import {usePortfolioStore} from '@/store/portfolioItem';
 import {Button} from '@/components/ui/button';
 import {API_BASE_URL} from '@/lib/globalConstants';
 import {Swiper, SwiperSlide} from 'swiper/react';
@@ -14,12 +14,11 @@ import {Navigation, Pagination} from 'swiper/modules';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import {faWhatsapp} from '@fortawesome/free-brands-svg-icons';
 import {CartPortfolio} from '@/app/portfolio/components/CartPortfolio';
-import CategoryCard from "@/app/home/components/CategoryCard";
-import ProductCard from "@/app/home/components/ProductCard";
+import CategoryCard from "@/components/shared/CategoryCard";
+import ProductCard from "@/components/shared/ProductCard";
 import {Category, PortfolioItemPreview, Product} from '@/lib/types';
 import {useCategoryStore} from "@/store/categoriesStore";
 import Loading from "@/components/shared/Loading";
-import ErrorMsg from "@/components/shared/ErrorMsg";
 
 interface HomePageClientProps {
     categories: Category[];
@@ -28,19 +27,33 @@ interface HomePageClientProps {
     categoriesError: string | null;
     productsError: string | null;
     portfolioError: string | null;
-}
+};
 
 const HomePageClient: React.FC<HomePageClientProps> = ({
                                                            categories,
                                                            products,
                                                            portfolioItems,
-                                                           categoriesError,
-                                                           productsError,
-                                                           portfolioError
+                                                           categoriesError: initialCategoriesError,
+                                                           productsError: initialProductsError,
+                                                           portfolioError: initialPortfolioError
                                                        }) => {
+    const {
+        categories: storedCategories,
+        setCategories,
+        fetchError: storedCategoriesError,
+        fetchLoading: categoriesLoading,
+        setFetchError: setCategoriesError,
+        setFetchLoading: setCategoriesLoading,
+    } = useCategoryStore();
 
-    const categoriesStore = useCategoryStore();
-    const productsStore = useProductStore();
+    const {
+        products: storedProducts,
+        setProducts,
+        fetchError: storedProductsError,
+        fetchLoading: productsLoading,
+        setFetchError: setProductsError,
+        setFetchLoading: setProductsLoading,
+    } = useProductStore();
 
     const {
         items: storedPortfolioItems,
@@ -48,28 +61,45 @@ const HomePageClient: React.FC<HomePageClientProps> = ({
         fetchLoading: portfolioLoading,
     } = usePortfolioStore();
 
+    const [isHydrating, setIsHydrating] = useState(true);
+
     useEffect(() => {
-        categoriesStore.setCategories(categories);
-        productsStore.setProducts(products);
+        setCategories(categories);
+        setProducts(products);
         setPortfolioPreview(portfolioItems);
 
-        categoriesStore.setFetchCategoriesError(categoriesError);
-        productsStore.setFetchProductsError(productsError);
+        setCategoriesError(initialCategoriesError);
+        setProductsError(initialProductsError);
 
-        categoriesStore.setFetchCategoriesLoading(false);
-        productsStore.setFetchProductsLoading(false);
-    }, [categories, products, portfolioItems, categoriesError, productsError, portfolioError, setPortfolioPreview]);
+        setCategoriesLoading(false);
+        setProductsLoading(false);
 
-    const overallLoading = categoriesStore.fetchCategoriesLoading || productsStore.fetchProductsLoading || portfolioLoading;
-    const overallError = categoriesStore.fetchCategoriesError || productsStore.fetchProductsError || portfolioError;
+        setIsHydrating(false);
+    }, [
+        categories, products, portfolioItems, initialCategoriesError,
+        initialProductsError, initialPortfolioError,
+        setCategories, setProducts, setPortfolioPreview,
+        setCategoriesError, setProductsError,
+        setCategoriesLoading, setProductsLoading,
+    ]);
+
+    const overallLoading = isHydrating || categoriesLoading || productsLoading || portfolioLoading;
+    const overallError = storedCategoriesError || storedProductsError;
 
     if (overallLoading) return <Loading/>;
-    if (overallError && (!categoriesStore.categories.length && !productsStore.products.length && !storedPortfolioItems.length)) {
-        return <ErrorMsg error={overallError}/>
+
+    if (overallError && (!storedCategories.length && !storedProducts.length && !storedPortfolioItems.length)) {
+        return (
+            <div className="flex justify-center items-center h-screen text-red-500 text-xl text-center">
+                Произошла ошибка при загрузке данных: {overallError}
+                <br/>
+                Пожалуйста, попробуйте обновить страницу или зайти позже
+            </div>
+        );
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 space-y-16">
+        <main className="space-y-16 py-8 px-4 sm:px-6 lg:px-8">
             <section aria-labelledby="hero-heading" className="text-center space-y-6 max-w-4xl mx-auto">
                 <h1 id="hero-heading"
                     className="text-4xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-primary to-amber-600 bg-clip-text text-transparent">
@@ -96,10 +126,10 @@ const HomePageClient: React.FC<HomePageClientProps> = ({
 
             <section className="space-y-6" aria-labelledby="categories-heading">
                 <h2 id="categories-heading" className="text-3xl font-bold text-center">Категории продукции</h2>
-                {categoriesStore.fetchCategoriesError && (
-                    <ErrorMsg error={categoriesStore.fetchCategoriesError} label='категорий'/>
+                {storedCategoriesError && (
+                    <div className="text-center text-red-500">Ошибка загрузки категорий: {storedCategoriesError}</div>
                 )}
-                {categoriesStore.categories.length > 0 ? (
+                {storedCategories.length > 0 ? (
                     <Swiper
                         slidesPerView={2}
                         spaceBetween={10}
@@ -112,14 +142,14 @@ const HomePageClient: React.FC<HomePageClientProps> = ({
                         modules={[Navigation, Pagination]}
                         className="mySwiper py-4"
                     >
-                        {categoriesStore.categories.map((cat) => (
+                        {storedCategories.map((cat) => (
                             <SwiperSlide key={cat._id}>
                                 <CategoryCard category={cat}/>
                             </SwiperSlide>
                         ))}
                     </Swiper>
                 ) : (
-                    !categoriesStore.fetchCategoriesError && <p className="text-center">Нет категорий</p>
+                    !storedCategoriesError && <p className="text-center">Нет категорий</p>
                 )}
             </section>
 
@@ -130,10 +160,10 @@ const HomePageClient: React.FC<HomePageClientProps> = ({
                         Все товары →
                     </Link>
                 </div>
-                {productsStore.fetchProductsError && (
-                    <ErrorMsg error={productsStore.fetchProductsError} label='продуктов'/>
+                {storedProductsError && (
+                    <div className="text-center text-red-500">Ошибка загрузки товаров: {storedProductsError}</div>
                 )}
-                {productsStore.products.length > 0 ? (
+                {storedProducts.length > 0 ? (
                     <Swiper
                         slidesPerView={1}
                         spaceBetween={10}
@@ -147,7 +177,7 @@ const HomePageClient: React.FC<HomePageClientProps> = ({
                         modules={[Navigation, Pagination]}
                         className="mySwiper py-4"
                     >
-                        {productsStore.products.map((product) => (
+                        {storedProducts.map((product) => (
                             <SwiperSlide key={product._id}>
                                 <div className="max-w-xs mx-auto md:max-w-none">
                                     <ProductCard product={product}/>
@@ -156,7 +186,7 @@ const HomePageClient: React.FC<HomePageClientProps> = ({
                         ))}
                     </Swiper>
                 ) : (
-                    !productsStore.fetchProductsError && <p className="text-center">Нет продуктов</p>
+                    !storedProductsError && <p className="text-center">Нет продуктов</p>
                 )}
             </section>
 
@@ -170,12 +200,11 @@ const HomePageClient: React.FC<HomePageClientProps> = ({
                 {storedPortfolioItems && storedPortfolioItems.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {storedPortfolioItems.map((item) => (
-                            <Link key={item._id} href={`/portfolio/${item._id}`}>
-                                <CartPortfolio
-                                    textBtn={"Смотреть все"}
-                                    imageSrc={`${API_BASE_URL}/${item.cover}`}
-                                />
-                            </Link>
+                            <CartPortfolio
+                                key={item._id}
+                                link={`/portfolio/${item._id}`}
+                                imageSrc={`${API_BASE_URL}/${item.cover}`}
+                            />
                         ))}
                     </div>
                 ) : (
@@ -201,18 +230,7 @@ const HomePageClient: React.FC<HomePageClientProps> = ({
                     </Button>
                 </div>
             </section>
-
-            <section className=" space-y-6 mx-auto bg-white">
-                <h2 className="text-3xl font-bold text-center from-primary">
-                    Наша лента в Instagram
-                </h2>
-                <iframe
-                    src="//lightwidget.com/widgets/a5595befc0b75c39ae732dfc56693cbd.html"
-                    className="lightwidget-widget w-full h-[500px] border-none rounded-xl shadow-md transition-opacity duration-700 ease-in-out"
-                    style={{overflow: 'hidden'}}
-                ></iframe>
-            </section>
-        </div>
+        </main>
     );
 };
 

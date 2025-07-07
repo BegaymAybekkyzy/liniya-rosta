@@ -121,14 +121,16 @@ const GalleryEditForm: React.FC<Props> = ({onSaved}) => {
                             variant="outline"
                             disabled={editLoading}
                             onClick={() => {
-                                const file = control._formValues.gallery.image;
+                                const file = control._formValues.image;
+                                const alt = control._formValues.alt;
                                 if (file instanceof File) {
-                                    showImagePreview(file, control._formValues.gallery.alt);
+                                    showImagePreview(file, alt);
                                 }
                             }}
                         >
                             <Eye className="w-4 h-4" /> Посмотреть изображение
                         </Button>
+
 
                     </div>
                     {errors.image && (

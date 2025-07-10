@@ -1,4 +1,5 @@
 import mongoose, {Schema} from "mongoose";
+import {PortfolioItemDocument} from "../../types";
 
 const GalleryItemSchema = new Schema({
     image: {type: String, required: true},
@@ -25,4 +26,5 @@ const PortfolioItemSchema = new mongoose.Schema({
     },
 });
 
-export const PortfolioItem = mongoose.model("PortfolioItem", PortfolioItemSchema);
+const PortfolioItem = mongoose.model<PortfolioItemDocument>("PortfolioItem", PortfolioItemSchema);
+export { PortfolioItem };

@@ -1,3 +1,5 @@
+import {Types} from "mongoose";
+
 export interface Product {
     _id: string;
     category: string;
@@ -60,3 +62,63 @@ export interface ServiceUpdate {
     title?: string;
     description?: string;
 }
+
+export interface FileRequestFiles {
+    [fieldname: string]: Express.Multer.File[];
+}
+
+export interface RequestWithFiles extends Express.Request {
+    files?: FileRequestFiles;
+}
+
+export interface RequestWithFile extends Express.Request {
+    file?: Express.Multer.File;
+}
+
+export interface GalleryItem {
+    _id: Types.ObjectId;
+    image: string;
+    alt?: string;
+}
+
+export interface DocumentWithGallery extends Document {
+    gallery: GalleryItem[];
+}
+
+export interface DocumentWithImages extends Document, IDocumentWithImages {}
+
+export interface IDocumentWithImages {
+    image?: string;
+    cover?: string;
+    gallery?: IGalleryItem[];
+}
+
+export interface IGalleryItem {
+    _id: Types.ObjectId;
+    image: string;
+    alt?: string;
+}
+
+export interface IProduct extends IDocumentWithImages {
+    category: Types.ObjectId;
+    title: string;
+    description?: string;
+    image: string;
+}
+
+export interface IPost extends IDocumentWithImages {
+    title: string;
+    description: string;
+    image: string;
+}
+
+export interface IPortfolioItem extends IDocumentWithGallery {
+    cover?: string;
+    coverAlt?: string;
+    description?: string;
+    gallery: IGalleryItem[];
+}
+
+export type ProductDocument = Document & IProduct;
+export type PostDocument = Document & IPost;
+export type PortfolioItemDocument = Document & IPortfolioItem;

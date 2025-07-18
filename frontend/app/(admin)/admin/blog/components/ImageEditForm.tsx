@@ -20,6 +20,7 @@ import {fetchPostById} from "@/actions/posts";
 import {toast} from "react-toastify";
 import {isAxiosError} from "axios";
 import {updatePostImage} from "@/actions/superadmin/posts";
+import FormErrorMessage from "@/components/ui/FormErrorMessage";
 
 interface Props {
     open: boolean;
@@ -116,7 +117,7 @@ const ImageEditForm: React.FC<React.PropsWithChildren<Props>> = (
                                     className="mb-2"
                                 />
                                 {errors.alt && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.alt.message}</p>
+                                    <FormErrorMessage>{errors.alt.message}</FormErrorMessage>
                                 )}
                             </div>
 
@@ -148,7 +149,7 @@ const ImageEditForm: React.FC<React.PropsWithChildren<Props>> = (
                                     </Button>
                                 </div>
                                 {errors.newImage && (
-                                    <p className="text-red-500 text-sm mt-1">{errors.newImage.message}</p>
+                                    <FormErrorMessage>{errors.newImage.message}</FormErrorMessage>
                                 )}
                             </div>
 

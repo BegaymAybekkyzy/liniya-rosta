@@ -1,3 +1,16 @@
+export interface ImageObject {
+    alt?: string;
+    image: string;
+    _id?: string;
+}
+
+interface PaginationMeta {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+}
+
 export interface GalleryForm {
     image: File | null,
     alt?: string,
@@ -31,14 +44,7 @@ export interface PortfolioItemDetail extends PortfolioItemPreview {
 type PortfolioEditValues = Partial<PortfolioMutation>;
 type GalleryEditValues = Partial<GalleryForm>;
 
-interface PaginationMeta {
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-}
-
-export interface PaginatedPortfolioResponse extends PaginationMeta{
+export interface PortfolioResponse extends PaginationMeta {
     items: PortfolioItemPreview[],
 }
 
@@ -130,30 +136,83 @@ export interface Post {
     _id: string;
     title: string;
     description: string;
-    image: string;
+    images: Image[];
+    imageCount: number;
 }
 
-export interface CreatePostData {
-    title: string;
-    description: string;
-    image: File;
+export interface PostResponse extends PaginationMeta {
+    items: Post[];
 }
 
-export interface UpdatePostData {
-    title?: string;
-    description?: string;
-    image?: File;
+export interface UpdateImagePost {
+    imageUrl: string;
+    alt?: string;
+    newImage?: File;
 }
 
-export interface ProductAdmin {
+export interface ProductImagesForm {
+    url: File | null;
+    alt?: string;
+}
+
+interface ImageItem {
+    _id: string;
+    url: string;
+    alt: string;
+}
+
+export interface Product {
     _id: string;
     title: string;
-    category: string;
-    image: string
+    category: {
+        _id: string;
+        title: string;
+    };
     description: string | null;
+    cover: {
+        url: string;
+        alt: string;
+    };
+    images: ImageItem[];
+    characteristics?: {
+        key: string;
+        value: string;
+    }[];
+    sale?: {
+        isOnSale: boolean;
+        label?: string;
+    };
+    icon?: {
+        alt?: string;
+        url: string | null;
+    };
 }
 
-export type ProductWithoutId = Omit<ProductAdmin, '_id'>;
+export interface ProductMutation {
+    category: string;
+    title: string;
+    description?: string;
+    coverAlt?: string | null;
+    cover?: File | null;
+    images: ProductImagesForm[];
+    characteristics?: {
+        key: string;
+        value: string;
+    }[];
+    sale?: {
+        isOnSale: boolean;
+        label?: string | null;
+    };
+    icon?: File | null;
+    iconAlt?: string | null;
+}
+
+type ImagesEditValues = Partial<GalleryForm>;
+
+export interface ProductUpdateMutation extends ProductMutation {
+    images?: null;
+    cover?: File | null;
+}
 
 export interface IRequest {
     _id: string;

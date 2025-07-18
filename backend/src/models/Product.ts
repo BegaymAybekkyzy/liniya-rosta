@@ -4,6 +4,16 @@ import {ProductDocument} from "../../types";
 
 const Schema = mongoose.Schema;
 
+const ImageItemSchema = new Schema({
+    url: {type: String, required: true},
+    alt: {type: String, default: null, maxLength: 150},
+});
+
+const CharacteristicItemSchema = new Schema({
+    key: {type: String, required: true},
+    value: {type: String, required: true, maxLength: 150},
+});
+
 const ProductSchema = new Schema({
     category: {
         type: Schema.Types.ObjectId,
@@ -25,10 +35,26 @@ const ProductSchema = new Schema({
         type: String,
         default: null,
     },
-    image: {
-        type: String,
-        required: [true, 'Фото обязательно для заполнения'],
+    cover: {
+        url: {type: String, required: [true, 'Обложка продукта обязательна для заполнения']},
+        alt: {type: String, default: null, maxLength: 150},
     },
+    images: {
+        type: [ImageItemSchema],
+        required: true,
+    },
+    characteristics: {
+        type: [CharacteristicItemSchema],
+        required: true,
+    },
+    sale: {
+        isOnSale: {type: Boolean, required: true, default: false},
+        label: {type: String, default: null, maxLength: 150}
+    },
+    icon: {
+        url: {type: String},
+        alt: {type: String, default: null, maxLength: 150},
+    }
 });
 
 const Product = mongoose.model<ProductDocument>('Product', ProductSchema);

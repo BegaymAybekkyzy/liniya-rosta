@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import {PostDocument} from "../../types";
 import {ImageItem} from "../../types";
 
 const Schema = mongoose.Schema;
@@ -27,5 +28,5 @@ const PostSchema = new Schema({
     },
 });
 
-const Post = mongoose.model("Post", PostSchema);
-export default Post;
+const Post = mongoose.model<PostDocument>("Post", PostSchema);
+export default Post

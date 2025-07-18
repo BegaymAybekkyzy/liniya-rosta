@@ -6,7 +6,7 @@ import {deleteOrReplaceImages} from "../../middleware/deleteImages";
 import {deleteOrReplaceGalleryImage} from "../../middleware/deleteImagesGallery";
 import {GalleryUpdate} from "../../../types";
 
-const portfolioSuperAdminRouter = express.Router();
+export const portfolioSuperAdminRouter = express.Router();
 
 portfolioSuperAdminRouter.post(
     "/",
@@ -137,6 +137,7 @@ portfolioSuperAdminRouter.patch(
             const refreshed = await PortfolioItem.findOne({"gallery._id": galleryId});
             res.send(refreshed);
         } catch (e) {
+            console.error("PATCH /gallery/:id error:", e);
             next(e);
         }
     }
@@ -167,7 +168,7 @@ portfolioSuperAdminRouter.delete(
 );
 
 portfolioSuperAdminRouter.delete(
-    "/gallery/:galleryId",
+    "/gallery/:id",
     deleteOrReplaceGalleryImage(PortfolioItem, "delete"),
     async (req, res, next) => {
         try {
@@ -194,4 +195,3 @@ portfolioSuperAdminRouter.delete(
     }
 );
 
-export default portfolioSuperAdminRouter;

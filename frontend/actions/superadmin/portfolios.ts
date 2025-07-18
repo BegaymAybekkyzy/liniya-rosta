@@ -37,7 +37,6 @@ export const editPortfolioItem = async (
     if (item.coverAlt) {
         formData.append("coverAlt", item.coverAlt);
     }
-
     await axiosAPI.patch("/superadmin/portfolio/" + id, formData);
 }
 
@@ -54,8 +53,7 @@ export const editGalleryItem = async ({item, gallery_id}: {
     if (item.alt) {
         formData.append("alt", item.alt);
     }
-
-    await axiosAPI.patch("superadmin/portfolio/gallery/" + gallery_id, formData);
+    await axiosAPI.patch("/superadmin/portfolio/gallery/" + gallery_id, formData);
 }
 
 export const deletePortfolio = async (item_id: string) => {

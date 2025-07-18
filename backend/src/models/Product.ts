@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Category from "./Category";
+import {ProductDocument} from "../../types";
 
 const Schema = mongoose.Schema;
 
@@ -56,6 +57,5 @@ const ProductSchema = new Schema({
     }
 });
 
-
-const Product = mongoose.model('Product', ProductSchema);
+const Product = mongoose.model<ProductDocument>('Product', ProductSchema);
 export default Product;

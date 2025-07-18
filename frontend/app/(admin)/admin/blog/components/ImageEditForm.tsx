@@ -141,10 +141,7 @@ const ImageEditForm: React.FC<React.PropsWithChildren<Props>> = (
                                                 showImagePreview(file, control._formValues.alt);
                                                 setPreviewImage({ image: localUrl, alt: control._formValues.alt });
                                                 setIsPreviewOpen(true);
-                                                console.log("open image modal")
                                             }
-                                            console.log("open image modal dddddddddd")
-
                                         }}
                                     >
                                         <Eye className="w-4 h-4"/> Посмотреть

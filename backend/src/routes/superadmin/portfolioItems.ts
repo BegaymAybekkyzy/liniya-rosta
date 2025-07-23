@@ -3,8 +3,8 @@ import {Types, Error as MongooseError} from "mongoose";
 import {PortfolioItem} from "../../models/PortfolioItem";
 import {portfolioImage} from "../../middleware/multer";
 import {deleteOrReplaceImages} from "../../middleware/deleteImages";
-import {deleteOrReplaceGalleryImage} from "../../middleware/deleteImagesGallery";
 import {GalleryUpdate} from "../../../types";
+import {deleteOrReplaceSubImage} from "../../middleware/deleteImagesGallery";
 
 export const portfolioSuperAdminRouter = express.Router();
 
@@ -101,14 +101,18 @@ portfolioSuperAdminRouter.patch(
 );
 
 portfolioSuperAdminRouter.patch(
-    "/gallery/:galleryId",
+    "/gallery/:id",
     portfolioImage.single("gallery"),
-    deleteOrReplaceGalleryImage(PortfolioItem, "replace"),
+    deleteOrReplaceSubImage(PortfolioItem, {
+        path: "gallery",
+        key: "image",
+        mode: "replace"
+    }),
     async (req, res, next) => {
         try {
-            const {galleryId} = req.params;
-            if (!Types.ObjectId.isValid(galleryId)) {
-                res.status(400).send({error: "Неверный формат ID элемента галереи"});
+            const { id } = req.params;
+            if (!Types.ObjectId.isValid(id)) {
+                res.status(400).send({ error: "Неверный формат ID элемента галереи" });
                 return;
             }
 
@@ -120,24 +124,23 @@ portfolioSuperAdminRouter.patch(
             if (newAlt) updateFields["gallery.$.alt"] = newAlt;
 
             if (Object.keys(updateFields).length === 0) {
-                res.status(400).send({error: "Нет данных для обновления"});
+                res.status(400).send({ error: "Нет данных для обновления" });
                 return;
             }
 
             const updated = await PortfolioItem.updateOne(
-                {"gallery._id": galleryId},
-                {$set: updateFields}
+                { "gallery._id": id },
+                { $set: updateFields }
             );
 
             if (updated.modifiedCount === 0) {
-                res.status(400).send({error: "Обновление не выполнено"});
+                res.status(400).send({ error: "Обновление не выполнено" });
                 return;
             }
 
-            const refreshed = await PortfolioItem.findOne({"gallery._id": galleryId});
+            const refreshed = await PortfolioItem.findOne({ "gallery._id": id });
             res.send(refreshed);
         } catch (e) {
-            console.error("PATCH /gallery/:id error:", e);
             next(e);
         }
     }
@@ -169,29 +172,34 @@ portfolioSuperAdminRouter.delete(
 
 portfolioSuperAdminRouter.delete(
     "/gallery/:id",
-    deleteOrReplaceGalleryImage(PortfolioItem, "delete"),
+    deleteOrReplaceSubImage(PortfolioItem, {
+        path: "gallery",
+        key: "image",
+        mode: "delete"
+    }),
     async (req, res, next) => {
         try {
-            const {galleryId} = req.params;
-            if (!Types.ObjectId.isValid(galleryId)) {
-                res.status(400).send({error: "Неверный формат ID элемента галереи"});
-                return
+            const { id } = req.params;
+            if (!Types.ObjectId.isValid(id)) {
+                res.status(400).send({ error: "Неверный формат ID элемента галереи" });
+                return;
             }
 
             const updated = await PortfolioItem.updateOne(
-                {"gallery._id": galleryId},
-                {$pull: {gallery: {_id: galleryId}}}
+                { "gallery._id": id },
+                { $pull: { gallery: { _id: id } } }
             );
 
             if (updated.modifiedCount === 0) {
-                res.status(404).send({error: "Элемент галереи не найден"});
-                return
+                res.status(404).send({ error: "Элемент галереи не найден" });
+                return;
             }
 
-            res.send({message: "Изображение галереи удалено"});
+            res.send({ message: "Изображение галереи удалено" });
         } catch (e) {
             next(e);
         }
     }
 );
+
 

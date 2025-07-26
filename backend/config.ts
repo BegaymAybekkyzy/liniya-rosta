@@ -5,7 +5,7 @@ const rootPath = __dirname;
 const config = {
     rootPath,
     publicPath: path.join(rootPath, "public"),
-    db: "mongodb://localhost/liniya-rosta",
+    db: "mongodb://mongo:27017/liniya-rosta"
 };
 
 export default config;

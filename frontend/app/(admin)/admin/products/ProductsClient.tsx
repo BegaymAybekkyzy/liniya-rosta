@@ -49,6 +49,8 @@ const ProductsClient: React.FC<ProductsClientProps> = ({
         setDeleteError,
     } = useAdminProductStore();
 
+    console.log(products);
+
     const {setCategories, fetchCategoriesError, setFetchCategoriesError} = useAdminCategoryStore();
 
     const anyLoading = createLoading || updateLoading || deleteLoading;

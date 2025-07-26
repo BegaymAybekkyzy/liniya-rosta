@@ -1,8 +1,8 @@
-import type {MetadataRoute} from 'next';
-import {PortfolioItemPreview, Post, Product} from "@/lib/types";
-import {fetchProducts} from "@/actions/products";
-import {fetchPortfolioPreviews} from "@/actions/portfolios";
-import {fetchPosts} from "@/actions/posts";
+import type { MetadataRoute } from 'next';
+import { PortfolioItemPreview, Post, Product } from '@/lib/types';
+import { fetchProducts } from '@/actions/products';
+import { fetchPortfolioPreviews } from '@/actions/portfolios';
+import { fetchPosts } from '@/actions/posts';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
 
@@ -10,51 +10,57 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const now = new Date();
 
     const staticUrls: MetadataRoute.Sitemap = [
-        {url: `${baseUrl}/`, lastModified: now},
-        {url: `${baseUrl}/contacts`, lastModified: now},
-        {url: `${baseUrl}/services`, lastModified: now},
-        {url: `${baseUrl}/portfolio`, lastModified: now},
-        {url: `${baseUrl}/ceilings`, lastModified: now},
-        {url: `${baseUrl}/spc`, lastModified: now},
-        {url: `${baseUrl}/blog`, lastModified: now},
+        { url: `${baseUrl}/`, lastModified: now },
+        { url: `${baseUrl}/contacts`, lastModified: now },
+        { url: `${baseUrl}/services`, lastModified: now },
+        { url: `${baseUrl}/portfolio`, lastModified: now },
+        { url: `${baseUrl}/ceilings`, lastModified: now },
+        { url: `${baseUrl}/spc`, lastModified: now },
+        { url: `${baseUrl}/blog`, lastModified: now },
     ];
 
-    const {items: products} = await fetchProducts('5000', '1');
-    // const productUrls: MetadataRoute.Sitemap = products.map((p: Product) => ({
-    //     url: `${baseUrl}/products/${p.slug}`,
-    //     lastModified: new Date(p.updatedAt || p.createdAt || now),
-    // }));
+    let products: Product[] = [];
+    let portfolioItems: PortfolioItemPreview[] = [];
+    let posts: Post[] = [];
 
-    const {items: portfolioItems} = await fetchPortfolioPreviews();
-    // const portfolioUrls: MetadataRoute.Sitemap = portfolioItems.map((item: PortfolioItemPreview) => ({
-    //     url: `${baseUrl}/portfolio/${item.slug}`,
-    //     lastModified: new Date(item.updatedAt || item.createdAt || now),
-    // }));
+    try {
+        const res = await fetchProducts('5000', '1');
+        products = res.items ?? [];
+    } catch (err) {
+        console.warn('⚠️ Could not fetch products for sitemap:', err);
+    }
 
-    const {items: posts} = await fetchPosts('5000', '1');
-    // const blogUrls: MetadataRoute.Sitemap = posts.map((post: Post) => ({
-    //     url: `${baseUrl}/blog/${post.slug}`,
-    //     lastModified: new Date(post.updatedAt || post.createdAt || now),
-    // }));
+    try {
+        const res = await fetchPortfolioPreviews();
+        portfolioItems = res.items ?? [];
+    } catch (err) {
+        console.warn('⚠️ Could not fetch portfolio for sitemap:', err);
+    }
 
+    try {
+        const res = await fetchPosts('5000', '1');
+        posts = res.items ?? [];
+    } catch (err) {
+        console.warn('⚠️ Could not fetch posts for sitemap:', err);
+    }
 
-    const productUrls = products
+    const productUrls: MetadataRoute.Sitemap = products
         .filter(p => !!p.slug)
-        .map((p: Product) => ({
+        .map(p => ({
             url: `${baseUrl}/products/${p.slug}`,
             lastModified: new Date(p.updatedAt || p.createdAt || now),
         }));
 
-    const portfolioUrls = portfolioItems
+    const portfolioUrls: MetadataRoute.Sitemap = portfolioItems
         .filter(p => !!p.slug)
-        .map((item: PortfolioItemPreview) => ({
-            url: `${baseUrl}/portfolio/${item.slug}`,
-            lastModified: new Date(item.updatedAt || item.createdAt || now),
+        .map(p => ({
+            url: `${baseUrl}/portfolio/${p.slug}`,
+            lastModified: new Date(p.updatedAt || p.createdAt || now),
         }));
 
-    const blogUrls = posts
+    const blogUrls: MetadataRoute.Sitemap = posts
         .filter(p => !!p.slug)
-        .map((post: Post) => ({
+        .map(post => ({
             url: `${baseUrl}/blog/${post.slug}`,
             lastModified: new Date(post.updatedAt || post.createdAt || now),
         }));

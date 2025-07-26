@@ -4,7 +4,7 @@ import mongoose, {isValidObjectId, PipelineStage} from "mongoose";
 
 export const getPortfolioItems = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { galleryId, limit = 10, page = 1, description, coverAlt } = req.query;
+        const {galleryId, limit = 10, page = 1, description, coverAlt} = req.query;
 
         if (galleryId) {
             const item = await PortfolioItem.findOne(
@@ -26,29 +26,29 @@ export const getPortfolioItems = async (req: Request, res: Response, next: NextF
         const skip = (parsedPage - 1) * parsedLimit;
 
         const matchStage: Partial<{
-            description: { $regex: string; $options: string };
-            coverAlt: { $regex: string; $options: string };
+            description: {$regex: string; $options: string};
+            coverAlt: {$regex: string; $options: string};
         }> = {};
 
         if (description && typeof description === "string") {
-            matchStage.description = { $regex: description, $options: "i" };
+            matchStage.description = {$regex: description, $options: "i"};
         }
 
         if (coverAlt && typeof coverAlt === "string") {
-            matchStage.coverAlt = { $regex: coverAlt, $options: "i" };
+            matchStage.coverAlt = {$regex: coverAlt, $options: "i"};
         }
 
         const aggregationPipeline = [
-            Object.keys(matchStage).length > 0 ? { $match: matchStage } : null,
-            { $sort: { _id: -1 } },
-            { $skip: skip },
-            { $limit: parsedLimit },
+            Object.keys(matchStage).length > 0 ? {$match: matchStage} : null,
+            {$sort: {_id: -1}},
+            {$skip: skip},
+            {$limit: parsedLimit},
             {
                 $project: {
                     cover: 1,
                     coverAlt: 1,
                     description: 1,
-                    galleryCount: { $size: "$gallery" }
+                    galleryCount: {$size: "$gallery"}
                 }
             }
         ].filter(Boolean) as PipelineStage[];

@@ -110,35 +110,35 @@ portfolioSuperAdminRouter.patch(
     }),
     async (req, res, next) => {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!Types.ObjectId.isValid(id)) {
-                res.status(400).send({ error: "Неверный формат ID элемента галереи" });
-                return;
+                res.status(400).send({error: "Неверный формат ID элемента галереи"});
+                return
             }
 
             const file = req.file;
             const newAlt = req.body.alt;
 
-            const updateFields: GalleryUpdate = {};
+            const updateFields: GalleryUpdate = {}
             if (file) updateFields["gallery.$.image"] = `portfolio/${file.filename}`;
             if (newAlt) updateFields["gallery.$.alt"] = newAlt;
 
             if (Object.keys(updateFields).length === 0) {
-                res.status(400).send({ error: "Нет данных для обновления" });
+                res.status(400).send({error: "Нет данных для обновления"});
                 return;
             }
 
             const updated = await PortfolioItem.updateOne(
-                { "gallery._id": id },
-                { $set: updateFields }
+                {"gallery._id": id},
+                {$set: updateFields}
             );
 
             if (updated.modifiedCount === 0) {
-                res.status(400).send({ error: "Обновление не выполнено" });
+                res.status(400).send({error: "Обновление не выполнено"});
                 return;
             }
 
-            const refreshed = await PortfolioItem.findOne({ "gallery._id": id });
+            const refreshed = await PortfolioItem.findOne({"gallery._id": id});
             res.send(refreshed);
         } catch (e) {
             next(e);
@@ -151,7 +151,7 @@ portfolioSuperAdminRouter.delete(
     deleteOrReplaceImages(
         PortfolioItem,
         (doc) => {
-            const images = doc.gallery.map((item: { image: string }) => item.image);
+            const images = doc.gallery.map((item: {image: string}) => item.image);
             if (doc.cover) images.push(doc.cover);
             return images;
         }
@@ -179,23 +179,23 @@ portfolioSuperAdminRouter.delete(
     }),
     async (req, res, next) => {
         try {
-            const { id } = req.params;
+            const {id} = req.params;
             if (!Types.ObjectId.isValid(id)) {
-                res.status(400).send({ error: "Неверный формат ID элемента галереи" });
+                res.status(400).send({error: "Неверный формат ID элемента галереи"});
                 return;
             }
 
             const updated = await PortfolioItem.updateOne(
-                { "gallery._id": id },
-                { $pull: { gallery: { _id: id } } }
+                {"gallery._id": id},
+                {$pull: {gallery: {_id: id}}}
             );
 
             if (updated.modifiedCount === 0) {
-                res.status(404).send({ error: "Элемент галереи не найден" });
+                res.status(404).send({error: "Элемент галереи не найден"});
                 return;
             }
 
-            res.send({ message: "Изображение галереи удалено" });
+            res.send({message: "Изображение галереи удалено"});
         } catch (e) {
             next(e);
         }

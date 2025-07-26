@@ -5,8 +5,8 @@ import {ImageItem} from "../../types";
 const Schema = mongoose.Schema;
 
 const ImageSchema = new Schema({
-    image: { type: String, required: true },
-    alt: { type: String, default: null, maxLength: 150 },
+    image: {type: String, required: true},
+    alt: {type: String, default: null, maxLength: 150},
 }, { _id: false });
 
 const PostSchema = new Schema({

@@ -3,6 +3,8 @@ import Post from "../../models/Post";
 import mongoose from "mongoose";
 import {postImage} from "../../middleware/multer";
 import {updatePost} from "../../../types";
+import {deleteOrReplaceImages} from "../../middleware/deleteImages/deleteImages";
+import {deleteOrReplacePostImage} from "../../middleware/deleteImages/deleteImagesPosts";
 import slugify from "slugify";
 import {translateYandex} from "../../../translateYandex";
 
@@ -28,7 +30,7 @@ postsSuperAdminRouter.post("/", postImage.array("images"), async (req, res, next
         const altsKy = await Promise.all(alts.map(alt => translateYandex(alt, "ky")));
 
         const images = files.map((file, index) => ({
-            image: `post/${file.filename}`,
+            image: `posts/${file.filename}`,
             alt: {
                 ru: alts[index],
                 ky: altsKy[index]
@@ -128,7 +130,7 @@ postsSuperAdminRouter.patch("/:id", postImage.array("images"), async (req, res, 
 
         if (files && files.length > 0) {
             const newImages = files.map((file, index) => ({
-                image: `post/${file.filename}`,
+                url: `posts/${file.filename}`,
                 alt: {
                     ru: alts[index],
                     ky: altsKy[index],
@@ -158,12 +160,23 @@ postsSuperAdminRouter.patch("/:id", postImage.array("images"), async (req, res, 
     }
 });
 
-postsSuperAdminRouter.patch("/:id/update-image", postImage.single("newImage"), async (req, res, next) => {
+postsSuperAdminRouter.patch(
+    "/:id/update-image",
+    postImage.single("newImage"),
+    (req, res, next) => {
+        const mode = req.body.mode === "append" ? "append" : "replace";
+        deleteOrReplacePostImage(Post, {
+            path: "images",
+            key: "image",
+            mode: mode === "append" ? "append" : "replace",
+        })(req, res, next);
+    },
+    async (req, res, next) => {
     const {id} = req.params;
     const {imageUrl, alt} = req.body;
 
     if (!imageUrl) {
-        res.status(400).json({error: "Ссылка на изображение обязательна"});
+         res.status(400).json({error: "Ссылка на изображение обязательна"});
         return;
     }
 
@@ -174,14 +187,14 @@ postsSuperAdminRouter.patch("/:id/update-image", postImage.single("newImage"), a
             return;
         }
 
-        const imageItem = post.images.find(img => img.image === imageUrl);
+        const imageItem = post.images.find(img => img.url === imageUrl);
         if (!imageItem) {
             res.status(404).json({error: "Изображение не найдено"});
             return;
         }
 
         if (req.file) {
-            imageItem.image = `post/${req.file.filename}`;
+            imageItem.url = `posts/${req.file.filename}`;
         }
 
         if (alt !== undefined) imageItem.alt = alt;
@@ -210,7 +223,7 @@ postsSuperAdminRouter.patch("/:id/reorder-images", async (req, res, next) => {
             return
         }
 
-        const currentImages = post.images.map(img => img.image);
+        const currentImages = post.images.map(img => img.url);
         const isValid =
             newOrder.length === currentImages.length &&
             newOrder.every(img => currentImages.includes(img.image));
@@ -229,7 +242,14 @@ postsSuperAdminRouter.patch("/:id/reorder-images", async (req, res, next) => {
 
 });
 
-postsSuperAdminRouter.patch("/:id/remove-images", async (req, res, next) => {
+postsSuperAdminRouter.patch(
+    "/:id/remove-images",
+    deleteOrReplacePostImage(Post, {
+            path: "images",
+            key: "image",
+            mode: 'delete',
+    }),
+    async (req, res, next) => {
     const {id} = req.params;
     const {image} = req.body;
 
@@ -256,7 +276,14 @@ postsSuperAdminRouter.patch("/:id/remove-images", async (req, res, next) => {
     }
 });
 
-postsSuperAdminRouter.delete("/:id", async (req, res, next) => {
+postsSuperAdminRouter.delete("/:id",
+    deleteOrReplaceImages(
+        Post,
+        doc => doc.images.map(i => i.url),
+        () => [],
+        "delete"
+    ),
+    async (req, res, next) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             res.status(400).send({error: "Неверный формат ID поста"});

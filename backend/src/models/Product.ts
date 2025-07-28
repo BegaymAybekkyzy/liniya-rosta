@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Category from "./Category";
 import slugify from "slugify";
+import {ProductDocument} from "../../types";
 
 const Schema = mongoose.Schema;
 
@@ -122,5 +123,5 @@ ProductSchema.pre("validate", async function (next) {
     next();
 });
 
-const Product = mongoose.model('Product', ProductSchema);
+const Product = mongoose.model<ProductDocument>('Product', ProductSchema);
 export default Product;

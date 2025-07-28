@@ -1,8 +1,11 @@
 import express from 'express';
 import Product from "../../models/Product";
 import Category from "../../models/Category";
-import mongoose from "mongoose";
+import mongoose, {Types} from "mongoose";
 import {productImage} from "../../middleware/multer";
+import {deleteOrReplaceImages} from "../../middleware/deleteImages/deleteImages";
+import {deleteOrReplaceSubImage} from "../../middleware/deleteImages/deleteImagesGallery";
+import {deleteOrReplaceIconImage} from "../../middleware/deleteImages/deleteImagesIcons";
 import slugify from "slugify";
 import {translateYandex} from "../../../translateYandex";
 
@@ -44,7 +47,7 @@ productsSuperAdminRouter.post("/", productImage.fields([
 
 
         const images = imagesFiles.map((file, i) => ({
-            url: "product/" + file.filename,
+            url: "products/" + file.filename,
             alt: {
                 ru: alts[i],
                 ky: altsKy[i]
@@ -82,7 +85,7 @@ productsSuperAdminRouter.post("/", productImage.fields([
             seoDescription: seoDescription?.trim() || null,
             description: {ru: description?.trim(), ky: desKy},
             cover: {
-                url: `product/${coverFile.filename}`,
+                url: `products/${coverFile.filename}`,
                 alt: {ru: req.body.coverAlt, ky: coverAltKy},
             },
             images,
@@ -92,7 +95,7 @@ productsSuperAdminRouter.post("/", productImage.fields([
                 label: {ru: req.body.label, ky: labelKy},
             },
             icon: {
-                url: iconFile ? `product/${iconFile.filename}` : null,
+                url: iconFile ? `products/${iconFile.filename}` : null,
                 alt: {ru: req.body.iconAlt, ky: iconAltKy},
             },
         });
@@ -104,11 +107,35 @@ productsSuperAdminRouter.post("/", productImage.fields([
     }
 });
 
-productsSuperAdminRouter.patch("/:id", productImage.fields([
-    {name: "cover", maxCount: 1},
-    {name: "images"},
-    {name: "icon", maxCount: 1}
-]), async (req, res, next) => {
+productsSuperAdminRouter.patch(
+    "/:id",
+    productImage.fields([
+        {name: "cover", maxCount: 1},
+        {name: "images"},
+        {name: "icon", maxCount: 1}
+    ]),
+
+    deleteOrReplaceImages(
+        Product,
+        (doc) => doc.cover?.url ? [doc.cover.url] : [],
+        (req) => {
+            const files = req.files as Record<string, Express.Multer.File[]>;
+            const result: string[] = [];
+            if (files.cover?.[0]) {
+                result.push(`products/${files.cover[0].filename}`);
+            }
+            return result;
+        },
+        "replace"
+    ),
+
+    deleteOrReplaceIconImage(Product, {
+        path: "icon",
+        key: "url",
+        mode: "replace",
+    }),
+
+    async (req, res, next) => {
     try {
         const files = req.files as {
             [fieldname: string]: Express.Multer.File[];
@@ -149,7 +176,8 @@ productsSuperAdminRouter.patch("/:id", productImage.fields([
 
         if (title) {
             const titleKy = await translateYandex(title, "ky");
-            product.title = {ru: title.trim(), ky: titleKy};
+            product.title = titleKy.title
+
 
             const baseSlug = slugify(title, {lower: true, strict: true});
             let uniqueSlug = baseSlug;
@@ -218,6 +246,24 @@ productsSuperAdminRouter.patch("/:id", productImage.fields([
             }
         }
 
+        if (req.body.characteristics) {
+            try {
+                product.characteristics = JSON.parse(req.body.characteristics);
+            } catch {
+                res.status(400).send({error: "Некорректный формат characteristics"});
+                return;
+            }
+        }
+
+        if (imagesFiles.length > 0) {
+            const alts: string[] = Array.isArray(req.body.alt) ? req.body.alt : [req.body.alt];
+
+            product.set('images', imagesFiles.map((file, i) => ({
+                url: "products/" + file.filename,
+                alt: alts[i] || null,
+            })));
+        }
+
         if (!product.sale) {
             product.sale = {isOnSale: false, label: {ru: '', ky: ''}};
         }
@@ -239,7 +285,7 @@ productsSuperAdminRouter.patch("/:id", productImage.fields([
             const iconAltKy = await translateYandex(iconAltRu, "ky");
 
             product.icon = {
-                url: `product/${iconFile.filename}`,
+                url: `products/${iconFile.filename}`,
                 alt: {
                     ru: iconAltRu,
                     ky: iconAltKy
@@ -252,7 +298,7 @@ productsSuperAdminRouter.patch("/:id", productImage.fields([
             const coverAltKy = await translateYandex(coverAltRu, "ky");
 
             product.cover = {
-                url: `product/${coverFile.filename}`,
+                url: `products/${coverFile.filename}`,
                 alt: {
                     ru: coverAltRu,
                     ky: coverAltKy
@@ -268,50 +314,61 @@ productsSuperAdminRouter.patch("/:id", productImage.fields([
     }
 });
 
+productsSuperAdminRouter.patch(
+    "/images/:imageId",
+    productImage.single("image"),
+    deleteOrReplaceSubImage(Product, {
+        path: "images",
+        key: "url",
+        mode: "replace",
+    }),
+    async (req, res, next) => {
+        try {
+            const {imageId} = req.params;
+            const file = req.file;
+            const newAlt = req.body?.alt;
 
-productsSuperAdminRouter.patch("/images/:imageId", productImage.fields([{
-    name: "images",
-    maxCount: 1
-}]), async (req, res, next) => {
-    try {
-        const {imageId} = req.params;
-        if (!mongoose.Types.ObjectId.isValid(imageId)) {
-            res.status(400).send({error: "Неверный ID изображения"});
-            return;
+            if (!Types.ObjectId.isValid(imageId)) {
+                res.status(400).send({error: "Неверный ID изображения"});
+                return;
+            }
+
+            const updateFields: Record<string, unknown> = {};
+            if (file) updateFields["images.$.url"] = "products/" + file.filename;
+            if (newAlt) updateFields["images.$.alt"] = newAlt;
+
+            const result = await Product.updateOne(
+                {"images._id": imageId},
+                {$set: updateFields}
+            );
+
+            if (result.modifiedCount === 0) {
+                res.status(404).send({error: "Изображение не найдено или не обновлено"});
+                return;
+            }
+
+            const updatedProduct = await Product.findOne({"images._id": imageId});
+            res.send(updatedProduct);
+        } catch (e) {
+            next(e);
         }
-
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-        const file = files.images?.[0];
-        const newAlt = req.body.alt;
-
-        const updateFields: any = {};
-        if (file) updateFields["images.$.url"] = "product/" + file.filename;
-        if (newAlt) updateFields["images.$.alt"] = newAlt;
-
-        const product = await Product.findOne({"images._id": imageId});
-        if (!product) {
-            res.status(404).send({error: "Продукт или изображение не найдено"});
-            return;
-        }
-
-        const updateResult = await Product.updateOne(
-            {"images._id": imageId},
-            {$set: updateFields}
-        );
-
-        if (updateResult.modifiedCount === 0) {
-            res.status(400).send({error: "Изменения не были применены"});
-            return;
-        }
-
-        const updatedProduct = await Product.findOne({"images._id": imageId});
-        res.send(updatedProduct);
-    } catch (e) {
-        next(e);
     }
-});
+);
+productsSuperAdminRouter.delete(
+    "/:id",
+    deleteOrReplaceImages(
+        Product,
+        (doc) => {
+            const urls: string[] = [];
 
-productsSuperAdminRouter.delete("/:id", async (req, res, next) => {
+            if (doc.cover?.url) urls.push(doc.cover.url);
+            if (doc.images?.length) urls.push(...doc.images.map((i) => i.url));
+            if (doc.icon?.url) urls.push(doc.icon.url);
+
+            return urls;
+        }
+    ),
+    async (req, res, next) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             res.status(400).send({error: "Неверный формат ID продукта"});
@@ -329,28 +386,37 @@ productsSuperAdminRouter.delete("/:id", async (req, res, next) => {
     }
 });
 
-productsSuperAdminRouter.delete("/images/:imageId", async (req, res, next) => {
-    try {
-        const {imageId} = req.params;
-        if (!mongoose.Types.ObjectId.isValid(imageId)) {
-            res.status(400).send({error: "Неверный ID изображения"});
-            return;
+productsSuperAdminRouter.delete(
+    "/images/:imageId",
+    deleteOrReplaceSubImage(Product, {
+        path: "images",
+        key: "url",
+        mode: "delete",
+    }),
+    async (req, res, next) => {
+        try {
+            const {imageId} = req.params;
+            if (!Types.ObjectId.isValid(imageId)) {
+                res.status(400).send({error: "Неверный ID изображения"});
+                return;
+            }
+
+            const result = await Product.updateOne(
+                {"images._id": imageId},
+                {$pull: {images: {_id: imageId}}}
+            );
+
+            if (result.modifiedCount === 0) {
+                res.status(404).send({error: "Изображение не найдено или уже удалено"});
+                return;
+            }
+
+            res.send({message: "Изображение успешно удалено"});
+        } catch (e) {
+            next(e);
         }
-
-        const updateResult = await Product.updateOne(
-            {"images._id": imageId},
-            {$pull: {images: {_id: imageId}}}
-        );
-
-        if (updateResult.modifiedCount === 0) {
-            res.status(404).send({error: "Изображение не найдено или уже удалено"});
-            return;
-        }
-
-        res.send({message: "Изображение успешно удалено"});
-    } catch (e) {
-        next(e);
     }
-});
+);
+
 
 export default productsSuperAdminRouter;

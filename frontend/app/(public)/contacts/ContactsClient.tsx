@@ -3,18 +3,18 @@
 import ContactInfoCard from "@/app/(public)/contacts/components/ContactInfoCard";
 import WorkingHoursCard from "@/app/(public)/contacts/components/WorkingHoursCard";
 import MapSection from "@/app/(public)/contacts/components/MapSection";
-import {Contact} from "@/lib/types";
 import {useEffect} from "react";
 import {useContactStore} from "@/store/contactsStore";
 import ErrorMsg from "@/components/ui/ErrorMsg";
 import LoadingFullScreen from "@/components/ui/Loading/LoadingFullScreen";
+import {fetchContacts} from "@/actions/contacts";
 
-interface Props {
-    data: Contact | null;
-    error: string | null;
-}
+// interface Props {
+//     data: Contact | null;
+//     error: string | null;
+// }
 
-const ContactsClient: React.FC<Props> = ({data, error}) => {
+const ContactsClient = () => {
     const {
         contact,
         setContact,
@@ -25,10 +25,22 @@ const ContactsClient: React.FC<Props> = ({data, error}) => {
     } = useContactStore();
 
     useEffect(() => {
-        if (data) setContact(data);
-        setFetchContactError(error);
-        setFetchContactLoading(false);
-    }, [data, error, setContact, setFetchContactError, setFetchContactLoading]);
+        const loadContacts = async () => {
+            setFetchContactLoading(true);
+            setFetchContactError(null);
+            try {
+                const data = await fetchContacts();
+                setContact(data);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : 'Неизвестная ошибка при загрузке контактов';
+                setFetchContactError(message);
+            } finally {
+                setFetchContactLoading(false);
+            }
+        };
+
+       void loadContacts();
+    }, [setContact, setFetchContactError, setFetchContactLoading]);
 
     if (fetchContactLoading) return <LoadingFullScreen/>;
     if (fetchContactError) return <ErrorMsg error={fetchContactError} label='контактов'/>

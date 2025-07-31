@@ -26,21 +26,21 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.static("public"));
-app.use('/post', express.static(path.join(config.publicPath, 'posts')));
-app.use('/product', express.static(path.join(config.publicPath, 'products')));
-app.use('/portfolio', express.static(path.join(config.publicPath, 'portfolio')));
-app.use('/laminate', express.static(path.join(config.publicPath, 'laminate')));
+app.use('/api/post', express.static(path.join(config.publicPath, 'posts')));
+app.use('/api/product', express.static(path.join(config.publicPath, 'products')));
+app.use('/api/portfolio', express.static(path.join(config.publicPath, 'portfolio')));
+app.use('/api/laminate', express.static(path.join(config.publicPath, 'laminate')));
 app.use(express.json());
 
-app.use('/users', usersRouter);
-app.use('/superadmin', superAdminRouter);
-app.use('/categories', categoryRouter);
-app.use('/products', productRouter);
-app.use('/posts', postRouter);
-app.use('/requests', requestRouter)
-app.use('/portfolio-items', portfolioItemRouter);
-app.use('/contacts', contactsRouter);
-app.use('/services', serviceRouter);
+app.use('/api/users', usersRouter);
+app.use('/api/superadmin', superAdminRouter);
+app.use('/api/categories', categoryRouter);
+app.use('/api/products', productRouter);
+app.use('/api/posts', postRouter);
+app.use('/api/requests', requestRouter)
+app.use('/api/portfolio-items', portfolioItemRouter);
+app.use('/api/contacts', contactsRouter);
+app.use('/api/services', serviceRouter);
 
 const run = async () => {
     await mongoose.connect(config.db);

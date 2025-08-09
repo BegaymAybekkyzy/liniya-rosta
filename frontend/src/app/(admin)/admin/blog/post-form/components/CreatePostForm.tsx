@@ -14,6 +14,7 @@ import {useSuperAdminPostStore} from "@/store/superadmin/superAdminPostsStore";
 import Link from "next/link";
 import {ImageObject} from "@/src/lib/types";
 import ConfirmDialog from "@/src/components/ui/ConfirmDialog";
+import FroalaEditorWrapper from "@/src/components/shared/FroalaEditor";
 import {Label} from "@/src/components/ui/label";
 import {handleKyError} from "@/src/lib/handleKyError";
 
@@ -87,25 +88,26 @@ const CreatePostForm: React.FC<Props> = ({setIsPreviewOpen, setPreviewImage}) =>
                     />
                     {errors.title && <FormErrorMessage>{errors.title.message}</FormErrorMessage>}
 
-                    <Input
+                    <Label className="mb-2 block">SEO заголовок</Label>
+                     <Input
                         type="text"
                         placeholder="SEO заголовок"
                         disabled={createLoading}
                         {...register('seoTitle.ru')}
                         className="mb-2"
                     />
-
                     {errors.seoTitle && <FormErrorMessage>{errors.seoTitle.message}</FormErrorMessage>}
 
-                    <Input
-                        type="text"
-                        placeholder="Описание"
-                        {...register('description.ru')}
-                        disabled={createLoading}
-                        className="mb-4"
-                    />
-                    {errors.description && <FormErrorMessage>{errors.description.message}</FormErrorMessage>}
-
+                    <div className="mb-4">
+                        <label className="block mb-2 text-sm font-medium">Описание</label>
+                        <FroalaEditorWrapper
+                            model={control._formValues.description?.ru}
+                            onChangeAction={(value: string) => setValue('description.ru', value, {shouldValidate: true})}
+                        />
+                        {errors.description?.ru &&
+                            <FormErrorMessage>{errors.description.ru.message}</FormErrorMessage>}
+                    </div>
+                    <Label className="mb-2 block">SEO описание</Label>
                     <Input
                         type="text"
                         placeholder="SEO описание"
@@ -122,7 +124,9 @@ const CreatePostForm: React.FC<Props> = ({setIsPreviewOpen, setPreviewImage}) =>
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => append({alt: {ru: ""}, file: null})}
+                            onClick={() => {
+                                    append({ alt: { ru: "" }, file: null });
+                            }}
                             disabled={createLoading}
                             className="mb-4"
                         >
